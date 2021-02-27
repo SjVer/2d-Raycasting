@@ -1,7 +1,6 @@
 # IMPORTING
 import pygame, time, os, sys, math
 pygame.font.init()
-pygame.mixer.init()
 pygame.init()
 sys.setrecursionlimit(10000)
 clock = pygame.time.Clock()
@@ -39,17 +38,16 @@ class Raycasting:
 
             if self.settings.active:
                 self.player.update()
-                self._update_rays()
 
             self._update_screen()
-        sys.exit()
+        pygame.quit()
 
     def _check_events(self):
         """Respond to keypresses and mouse events."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-                sys.exit()
+                pygame.quit()
             elif event.type == pygame.KEYDOWN:
                 self._check_keydown_events(event)
             elif event.type == pygame.KEYUP:
@@ -61,16 +59,16 @@ class Raycasting:
             self.player.moving_down = True
         elif event.key == pygame.K_w:
             self.player.moving_up = True
-        elif event.key == pygame.K_a:
-            self.player.moving_left = True
         elif event.key == pygame.K_d:
+            self.player.moving_left = True
+        elif event.key == pygame.K_a:
             self.player.moving_right = True
         elif event.key == pygame.K_LEFT:
-            self.player.looking_left = True
-        elif event.key == pygame.K_RIGHT:
             self.player.looking_right = True
+        elif event.key == pygame.K_RIGHT:
+            self.player.looking_left = True
         elif event.key == pygame.K_q:
-            sys.exit()
+            pygame.quit()
 
     def _check_keyup_events(self, event):
         """Respond to key releases."""
@@ -78,17 +76,14 @@ class Raycasting:
             self.player.moving_down = False
         elif event.key == pygame.K_w:
             self.player.moving_up = False
-        elif event.key == pygame.K_a:
-            self.player.moving_left = False
         elif event.key == pygame.K_d:
+            self.player.moving_left = False
+        elif event.key == pygame.K_a:
             self.player.moving_right = False
         elif event.key == pygame.K_LEFT:
-            self.player.looking_left = False
-        elif event.key == pygame.K_RIGHT:
             self.player.looking_right = False
-
-    def _update_rays(self):
-        pass
+        elif event.key == pygame.K_RIGHT:
+            self.player.looking_left = False
 
     def draw_map(self):
         """Draws the given map"""
@@ -121,9 +116,27 @@ class Raycasting:
             ypos += 1
 
     def draw_view(self):
-        pygame.draw.rect(self.WIN, colors.grey, (self.settings.window_width/2, 0, self.settings.window_width/2, self.settings.window_height/2), 0)
-        pygame.draw.rect(self.WIN, colors.darkgrey, (self.settings.window_width/2, self.settings.window_height/2, self.settings.window_width/2, self.settings.window_height/2), 0)
         pygame.draw.line(self.WIN, colors.black, (self.settings.window_width/2-1, 0), (self.settings.window_width/2-1, self.settings.window_height), 2)
+        pygame.draw.rect(self.WIN, self.settings.sky_color, (self.settings.window_width/2, 0, self.settings.window_width/2, self.settings.window_height/2), 0)
+        pygame.draw.rect(self.WIN, self.settings.ground_color, (self.settings.window_width/2, self.settings.window_height/2, self.settings.window_width/2, self.settings.window_height/2), 0)
+
+        linewidth = (self.settings.window_width/2)/len(self.player.distances)
+        i = 0
+        for column in self.player.distances:
+            height = (self.settings.window_height - column[0])/self.settings.wall_height_divider
+            if column[1] == 'hor':
+                color = self.settings.wall_color
+                for c in range(0,2):
+                    if color[c] >= self.settings.color_scalar:
+                        color = list(color)
+                        color[c] = color[c] - self.settings.color_scalar  
+                        color = tuple(color)                      
+            else:
+                color = self.settings.wall_color
+            pygame.draw.rect(self.WIN, color, (self.settings.window_width/2 + i*linewidth, self.settings.window_height/2 - height/2, linewidth+2, height), 0)
+            i += 1
+            
+
 
     def _update_screen(self):
         """Update images on the screen, and flip to the new screen."""
